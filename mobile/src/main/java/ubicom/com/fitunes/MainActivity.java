@@ -1,11 +1,13 @@
 package ubicom.com.fitunes;
 
+import android.content.Context;
 import android.net.Uri;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.media.MediaPlayer;
+import android.widget.TextView;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -17,6 +19,23 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        /* This gets the intent from the the Group activity and sets the name of the group
+        *  based on which one was selected. If no group is selected, the user is told.
+        */
+        TextView tv = (TextView) findViewById(R.id.group_tv_id);
+        Bundle getGroupNameExtra = getIntent().getExtras();
+        if (getGroupNameExtra != null)
+        {
+            tv.setText(getGroupNameExtra.getString("GroupName"));
+
+        }
+        else
+        {
+            String noGroupSelected = "No Group Selected!";
+
+            tv.setText(noGroupSelected);
+        }
 
         //TODO Remove this when we implement a real music player activity. Messy, single file, and for testing only
         mediaPlayer = MediaPlayer.create(this, R.raw.song);

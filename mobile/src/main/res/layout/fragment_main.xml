@@ -10,7 +10,8 @@
         android:gravity="center"
         style="@android:style/TextAppearance.Large"
         android:textStyle="italic"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:id="@+id/group_tv_id"/>
 
     <View
         android:layout_width="1dp"
