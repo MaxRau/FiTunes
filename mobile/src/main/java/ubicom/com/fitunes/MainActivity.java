@@ -1,6 +1,7 @@
 package ubicom.com.fitunes;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -8,13 +9,22 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.media.MediaPlayer;
 import android.widget.TextView;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import android.media.AudioManager;
 
 public class MainActivity extends ActionBarActivity {
 
     int[] songs = {R.raw.song, R.raw.song2, R.raw.song3};//TODO Remove after Milestone 2. Temporary (static) playlist of songs.
-    int nextSong = 0;
+    String[] songNames = {"Here Comes the Sun", "Maxwell's Silver Hammer", "The End"};
+    int nextSong = 1;
+    List<String> favourites;                           //TODO change identifying type to match song id
 
     public MediaPlayer mediaPlayer;//TODO Remove this when we implement a real music player activity. Messy, single file, and for testing only
+    public MediaPlayer audioStream;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,7 +38,6 @@ public class MainActivity extends ActionBarActivity {
         if (getGroupNameExtra != null)
         {
             tv.setText(getGroupNameExtra.getString("GroupName"));
-
         }
         else
         {
@@ -37,34 +46,91 @@ public class MainActivity extends ActionBarActivity {
             tv.setText(noGroupSelected);
         }
 
+        favourites = new ArrayList<String>();
+
         //TODO Remove this when we implement a real music player activity. Messy, single file, and for testing only
         mediaPlayer = MediaPlayer.create(this, R.raw.song);
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener(){
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
                 playNext();
             }
         });
+
     }
+
+    /**
+     * Triggering music on start instead of button press. Maybe we move this later to support the music playing when the app is
+     * not in focus.
+     */
+    protected void onStart(){
+        super.onStart();
+
+        //Begins streaming from given URL.
+        try {
+            audioStream = new MediaPlayer();
+            String url = "http://3143.live.streamtheworld.com:3690/CBC_R2_HFX_H_SC";
+            audioStream.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            audioStream.setDataSource(url);
+            audioStream.prepare();
+            audioStream.start();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        super.onStart();
+
+//       mediaPlayer.start();
+
+    }
+
+    /**
+     * Adds current song to favourites list
+     */
+    public void addToFavourites(){
+        favourites.add(songNames[nextSong--]);
+    }
+
     //This Method Plays the Next Song in the Playlist
     public void playNext() {
-
-        if(nextSong < songs.length){
-            mediaPlayer.release();
-            mediaPlayer = MediaPlayer.create(this, songs[nextSong]);
-            mediaPlayer.setVolume(1,1);
-            mediaPlayer.start();
-        }
-        nextSong++;
-
     }
 
     //Song has been downvoted mutes for remainder of song
     public void hate() {
-        //TODO Add veto vote to server after Milestone 2
-        mediaPlayer.setVolume(0,0);
+        audioStream.setVolume(0,0);
+
+        nextSong++;
+        if(nextSong < songs.length){
+            mediaPlayer.release();
+            mediaPlayer = MediaPlayer.create(this, songs[nextSong]);
+            mediaPlayer.setVolume(1, 1);
+            mediaPlayer.start();
+
+            //Listens for the local song to finish.
+            //On complete, jump back into the live stream.
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    mp.setVolume(0, 0);
+                    audioStream.setVolume(1, 1);
+                }
+            });
+
+        }
+        else {
+            mediaPlayer.setVolume(0,0);
+        }
+
     }
 
+    public void showSummary() {
+        audioStream.stop();
+        mediaPlayer.stop();
+        Intent summaryIntent = new Intent(MainActivity.this, SummaryActivity.class);
+        summaryIntent.putStringArrayListExtra("songs", (ArrayList<String>)favourites);
+        startActivity(summaryIntent);
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
