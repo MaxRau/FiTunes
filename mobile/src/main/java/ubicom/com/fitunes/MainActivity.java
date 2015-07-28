@@ -9,9 +9,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.media.MediaPlayer;
 import android.widget.TextView;
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import android.media.AudioManager;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -21,6 +22,9 @@ public class MainActivity extends ActionBarActivity {
     List<String> favourites;                           //TODO change identifying type to match song id
 
     public MediaPlayer mediaPlayer;//TODO Remove this when we implement a real music player activity. Messy, single file, and for testing only
+    public MediaPlayer audioStream;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,10 +46,11 @@ public class MainActivity extends ActionBarActivity {
             tv.setText(noGroupSelected);
         }
 
-            favourites = new ArrayList<String>();
+        favourites = new ArrayList<String>();
+
         //TODO Remove this when we implement a real music player activity. Messy, single file, and for testing only
         mediaPlayer = MediaPlayer.create(this, R.raw.song);
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener(){
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
                 playNext();
@@ -60,7 +65,24 @@ public class MainActivity extends ActionBarActivity {
      */
     protected void onStart(){
         super.onStart();
-        mediaPlayer.start();
+
+        //Begins streaming from given URL.
+        try {
+            audioStream = new MediaPlayer();
+            String url = "http://3143.live.streamtheworld.com:3690/CBC_R2_HFX_H_SC";
+            audioStream.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            audioStream.setDataSource(url);
+            audioStream.prepare();
+            audioStream.start();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        super.onStart();
+
+//       mediaPlayer.start();
+
     }
 
     /**
@@ -76,19 +98,34 @@ public class MainActivity extends ActionBarActivity {
 
     //Song has been downvoted mutes for remainder of song
     public void hate() {
+        audioStream.setVolume(0,0);
+
         nextSong++;
         if(nextSong < songs.length){
             mediaPlayer.release();
             mediaPlayer = MediaPlayer.create(this, songs[nextSong]);
             mediaPlayer.setVolume(1, 1);
             mediaPlayer.start();
-        } else {
+
+            //Listens for the local song to finish.
+            //On complete, jump back into the live stream.
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    mp.setVolume(0, 0);
+                    audioStream.setVolume(1, 1);
+                }
+            });
+
+        }
+        else {
             mediaPlayer.setVolume(0,0);
         }
 
     }
 
     public void showSummary() {
+        audioStream.stop();
         mediaPlayer.stop();
         Intent summaryIntent = new Intent(MainActivity.this, SummaryActivity.class);
         summaryIntent.putStringArrayListExtra("songs", (ArrayList<String>)favourites);

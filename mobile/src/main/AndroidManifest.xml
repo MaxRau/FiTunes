@@ -24,6 +24,7 @@
             android:name=".SummaryActivity"
             android:label="@string/title_activity_summary" >
         </activity>
+        <uses-permission android:name="android.permission.INTERNET" />
     </application>
 
 </manifest>

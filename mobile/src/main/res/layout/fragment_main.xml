@@ -83,7 +83,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:scaleType="fitCenter"
-            android:src="@drawable/green_up_arrow"/>
+            android:src="@drawable/green_thumbs_up"/>
         <!-- Skip Button -->
         <ImageButton
             android:id="@+id/buttonDown"
@@ -91,7 +91,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:scaleType="fitCenter"
-            android:src="@drawable/red_down_arrow"/>
+            android:src="@drawable/skip"/>
     </LinearLayout>
     <View
         android:layout_width="1dp"
